@@ -1,0 +1,34 @@
+stages:
+  - deploy
+  - log
+
+deploy:
+  variables:
+    GIT_CLEAN_FLAGS: none
+  stage: deploy
+  before_script:
+    - echo "Deployment running..."
+  script:
+    - cat "$APPLICATION_PROD_PROPERTIES" > "$(pwd)/src/main/resources/application.properties"
+    - mvn clean install
+    - sudo systemctl restart $SERVICE_NAME
+  after_script:
+    - echo "Deployment succeed"
+  tags:
+    - tags-prod
+  only:
+    - main
+  when: manual
+
+log:
+  variables:
+    GIT_STRATEGY: none
+    GIT_CHECKOUT: "false"
+  stage: log
+  script:
+    - sudo journalctl -fu $SERVICE_NAME
+  tags:
+    - backend-logger
+  only:
+    - main
+  when: manual
